@@ -44,7 +44,7 @@ class Config():
         x2, y2 = config_dict["EXIT"].split(",")
         if x == x2 and y == y2:
             raise ValueError("Entry must be different than exit")
-        if (int(x) < 0 or int(x) > self.width) or (int(y) < 0 or int(y) > self.height):
+        if (int(x2) < 0 or int(x2) > int(config_dict["WIDTH"])) or (int(y2) < 0 or int(y2) > int(config_dict["HEIGHT"])):
             raise ValueError("Invalid exit")
         self.exit: tuple[int, int] = int(x2), int(y2)
 
