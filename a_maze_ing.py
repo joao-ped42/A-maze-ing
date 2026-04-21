@@ -1,5 +1,20 @@
 import sys
-from maze_generator import Config
+from maze_generator import Config, MazeGenerator
+
+
+# class Ideias:
+    # generator.display_cells2()
+    # for _ in range(generator.configs.width):
+    #     Cell.put_horizontal()
+    # print()
+    # for _ in range(generator.configs.height):
+    #     for _ in range(generator.configs.width):
+    #         Cell.put_vertical()
+    #     print()
+    #     for _ in range(generator.configs.width):
+    #         Cell.put_horizontal()
+    #     print()
+    # Cell.put_horizontal()
 
 
 def get_configs(file_name: str) -> Config:
@@ -28,7 +43,17 @@ def get_configs(file_name: str) -> Config:
         return Config(config_dict)
 
     except (KeyError, ValueError, TypeError) as err:
-        raise KeyError(f"Error: {err}!")
+        raise KeyError(f"{err}")
+
+
+def display_config(config: Config) -> None:
+    print(config.width)
+    print(config.height)
+    print(config.entry)
+    print(config.exit)
+    print(config.output_file)
+    print(config.perfect)
+    print(config.seed)
 
 
 def main(file_name: str) -> None:
@@ -37,14 +62,14 @@ def main(file_name: str) -> None:
     """
     try:
         configs: Config = get_configs(file_name)
-        print(configs.width)
-        print(configs.height)
-        print(configs.entry)
-        print(configs.exit)
-        print(configs.output_file)
-        print(configs.perfect)
+        generator = MazeGenerator(configs)
+        # display_config(generator.configs)
+        # print("============================================\n")
+        generator.build_grid()
+        generator.display_maze()
+        generator.get_output_file()
     except Exception as err:
-        print(f"Error: {err}")
+        print(f"{err}")
 
 
 if __name__ == "__main__":
