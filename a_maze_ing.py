@@ -66,6 +66,7 @@ def main(file_name: str) -> None:
         # display_config(generator.configs)
         # print("============================================\n")
         generator.build_grid()
+        generator.insert_42()
         generator.display_maze()
         generator.get_output_file()
     except Exception as err:

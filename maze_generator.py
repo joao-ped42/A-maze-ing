@@ -78,6 +78,8 @@ class Cell:
         }
         self.visited = False
         self.is_42 = False
+        if self.is_42:
+            self.visited = True
 
     def destruct_wall(self, direction: str) -> None:
         self.walls.update({direction: 0})
@@ -110,8 +112,6 @@ class MazeGenerator:
         self.grid: list[list[Cell]] = []
 
     def display_maze(self) -> None:
-        self.grid[4][4].walls["west"] = 0
-        self.grid[1][8].walls["north"] = 0
         ret: str = ""
         for y in range(self.configs.height):
             line_1: str = "█"
@@ -119,16 +119,27 @@ class MazeGenerator:
             for x in range(self.configs.width):
                 cell: Cell = self.grid[y][x]
                 empty: str = "  "
-                if (cell.walls["north"] == 1):
-                    line_1 += "██"
+                if cell.is_42:
+                    if cell.walls["north"] == 1:
+                        line_1 += "███"
+                    else:
+                        line_1 += "\033[31m██\033[0m█"
+                    if cell.walls["west"] == 1:
+                        line_2 += "█"
+                    else:
+                        line_2 += "\033[31m█\033[0m"
+                    line_2 += "\033[31m██\033[0m"
                 else:
-                    line_1 += empty
-                if (cell.walls["west"] == 1):
-                    line_2 += "█"
-                else:
-                    line_2 += " "
-                line_2 += empty
-                line_1 += "█"
+                    if (cell.walls["north"] == 1):
+                        line_1 += "██"
+                    else:
+                        line_1 += empty
+                    if (cell.walls["west"] == 1):
+                        line_2 += "█"
+                    else:
+                        line_2 += " "
+                    line_2 += empty
+                    line_1 += "█"
             line_2 += "█"
             ret = ret + line_1 + "\n" + line_2 + "\n"
         bottom_line: str = ""
@@ -153,28 +164,52 @@ class MazeGenerator:
         y = int(self.configs.height / 2)
 
         # 4 format
-        self.grid[x-1][y].is_42 = True
-        self.grid[x-2][y].is_42 = True
-        self.grid[x-3][y].is_42 = True
-        self.grid[x-3][y-1].is_42 = True
-        self.grid[x-3][y-2].is_42 = True
-        self.grid[x-1][y+1].is_42 = True
-        self.grid[x-1][y+2].is_42 = True
+        # self.grid[x-1][y].is_42 = True
+        # self.grid[x-2][y].is_42 = True
+        # self.grid[x-3][y].is_42 = True
+        # self.grid[x-3][y-1].is_42 = True
+        # self.grid[x-3][y-2].is_42 = True
+        # self.grid[x-1][y+1].is_42 = True
+        # self.grid[x-1][y+2].is_42 = True
+        self.grid[y][x-1].is_42 = True
+        self.grid[y][x-1].walls.update({"west": 0})
+        self.grid[y][x-2].is_42 = True
+        self.grid[y][x-2].walls.update({"west": 0})
+        self.grid[y][x-3].is_42 = True
+        self.grid[y][x-3].walls.update({"north": 0})
+        self.grid[y-1][x-3].is_42 = True
+        self.grid[y-1][x-3].walls.update({"north": 0})
+        self.grid[y-2][x-3].is_42 = True
+        self.grid[y+1][x-1].is_42 = True
+        self.grid[y+1][x-1].walls.update({"north": 0})
+        self.grid[y+2][x-1].is_42 = True
+        self.grid[y+2][x-1].walls.update({"north": 0})
 
         # 2 format
-        self.grid[x+1][y].is_42 = True
-        self.grid[x+2][y].is_42 = True
-        self.grid[x+3][y].is_42 = True
-        self.grid[x+3][y-1].is_42 = True
-        self.grid[x+3][y-2].is_42 = True
-        self.grid[x+2][y-2].is_42 = True
-        self.grid[x+1][y-2].is_42 = True
-        self.grid[x+1][y+1].is_42 = True
-        self.grid[x+1][y+2].is_42 = True
-        self.grid[x+2][y+2].is_42 = True
-        self.grid[x+3][y+2].is_42 = True
+        self.grid[y][x+1].is_42 = True
+        self.grid[y][x+2].is_42 = True
+        self.grid[y][x+2].walls.update({"west": 0})
+        self.grid[y][x+3].is_42 = True
+        self.grid[y][x+3].walls.update({"north": 0})
+        self.grid[y][x+3].walls.update({"west": 0})
+        
+        self.grid[y-1][x+3].is_42 = True
+        self.grid[y-1][x+3].walls.update({"north": 0})
+        self.grid[y-2][x+3].is_42 = True
+        self.grid[y-2][x+3].walls.update({"west": 0})
 
-
+        self.grid[y-2][x+2].is_42 = True
+        self.grid[y-2][x+2].walls.update({"west": 0})
+        self.grid[y-2][x+1].is_42 = True
+        self.grid[y+1][x+1].is_42 = True
+        self.grid[y+1][x+1].walls.update({"north": 0})
+        self.grid[y+2][x+1].is_42 = True
+        self.grid[y+2][x+1].walls.update({"north": 0})
+        
+        self.grid[y+2][x+2].is_42 = True
+        self.grid[y+2][x+2].walls.update({"west": 0})
+        self.grid[y+2][x+3].is_42 = True
+        self.grid[y+2][x+3].walls.update({"west": 0})
 
     def get_maze_hex(self, file: IO) -> None:
         ret: str = ""
