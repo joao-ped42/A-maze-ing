@@ -77,6 +77,7 @@ class Cell:
             "west": 1
         }
         self.visited = False
+        self.is_42 = False
 
     def destruct_wall(self, direction: str) -> None:
         self.walls.update({direction: 0})
@@ -146,6 +147,34 @@ class MazeGenerator:
             for x in range(width):
                 row.append(Cell((x, y)))
             self.grid.append(row)
+
+    def insert_42(self) -> None:
+        x = int(self.configs.width / 2)
+        y = int(self.configs.height / 2)
+
+        # 4 format
+        self.grid[x-1][y].is_42 = True
+        self.grid[x-2][y].is_42 = True
+        self.grid[x-3][y].is_42 = True
+        self.grid[x-3][y-1].is_42 = True
+        self.grid[x-3][y-2].is_42 = True
+        self.grid[x-1][y+1].is_42 = True
+        self.grid[x-1][y+2].is_42 = True
+
+        # 2 format
+        self.grid[x+1][y].is_42 = True
+        self.grid[x+2][y].is_42 = True
+        self.grid[x+3][y].is_42 = True
+        self.grid[x+3][y-1].is_42 = True
+        self.grid[x+3][y-2].is_42 = True
+        self.grid[x+2][y-2].is_42 = True
+        self.grid[x+1][y-2].is_42 = True
+        self.grid[x+1][y+1].is_42 = True
+        self.grid[x+1][y+2].is_42 = True
+        self.grid[x+2][y+2].is_42 = True
+        self.grid[x+3][y+2].is_42 = True
+
+
 
     def get_maze_hex(self, file: IO) -> None:
         ret: str = ""
