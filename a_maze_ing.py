@@ -32,6 +32,9 @@ def get_configs(file_name: str) -> Config:
 
 
 def main(file_name: str) -> None:
+    """
+    Runs the main program.
+    """
     try:
         configs: Config = get_configs(file_name)
         print(configs.width)

@@ -1,5 +1,9 @@
 class Cell:
-
+    """
+    Represents each square in the maze.
+    Each Cell has 4 wall directions, 1 means closed, 0 means open.
+    When created, all walls are closed.
+    """
     def __init__(self, coords: tuple[int, int]) -> None:
         self.coordinates: tuple[int, int] = coords
         self.walls: dict[str, int] = {
@@ -25,7 +29,9 @@ class Cell:
 
 
 class Config():
-
+    """
+    Stores information from the config.txt file
+    """
     def __init__(self, config_dict: dict[str, str]) -> None:
 
         if int(config_dict["WIDTH"]) <= 0:
