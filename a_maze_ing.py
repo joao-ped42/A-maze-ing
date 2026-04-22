@@ -67,35 +67,35 @@ def display_options() -> str:
 
 
 def choose_color() -> Generator[Pallets.Pallet, None, None]:
-    colors: list[Pallets.Pallet] = [Pallets.VSCode()]
+    colors: list[Pallets.Pallet] = [Pallets.VSCode(),
+                                    Pallets.Default()]
     while True:
         for color in colors:
             yield (color)
 
 
-def display_interface(maze_generator: MazeGenerator) -> None:
+def display_interface(maze_generator: MazeGenerator, color:
+                      Generator[Pallets.Pallet, None, None]) -> None:
     maze_generator.build_grid()
-    color = choose_color()
     if (maze_generator.configs.width >= 9 and
             maze_generator.configs.height >= 6):
         maze_generator.insert_42()
-        # se as cordenadas do entry ou do exit estiverem numa Cell que is_42 ==
-        # True
-        #   raise error
     else:
         print("42 unprintable :(")
     maze_generator.get_output_file()
-    maze_generator.display_maze(next(color))
+    maze_generator.display_maze()
     answer: str = display_options()
     match answer:
         case "1":
             system(f"rm -rf {maze_generator.configs.output_file}")
             clearify()
-            display_interface(maze_generator)
+            display_interface(maze_generator, color)
         case "2":
             pass
         case "3":
-            pass
+            maze_generator.configs.color = next(color)
+            clearify()
+            display_interface(maze_generator, color)
         case "4":
             return
 
@@ -107,7 +107,8 @@ def main(file_name: str) -> None:
     try:
         configs: Config = get_configs(file_name)
         generator = MazeGenerator(configs)
-        display_interface(generator)
+        colors = choose_color()
+        display_interface(generator, colors)
     except Exception as err:
         print(f"{err}")
 

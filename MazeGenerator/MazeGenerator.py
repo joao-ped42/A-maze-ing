@@ -1,6 +1,6 @@
 from .Cell import Cell
 from .Config import Config
-import MazeGenerator.Pallets as Pallets
+from .Exceptions import Error42
 
 
 class MazeGenerator:
@@ -15,44 +15,50 @@ class MazeGenerator:
         self.configs: Config = configs
         self.grid: list[list[Cell]] = []
 
-    def display_maze(self, pallet: Pallets.Pallet) -> None:
+    def display_maze(self) -> None:
         """
         Prints the maze on the terminal.
         """
         ret: str = ""
         for y in range(self.configs.height):
-            line_1: str = f"{pallet.wall}█\033[0m"
+            line_1: str = f"{self.configs.color.wall}█\033[0m"
             line_2: str = ""
             for x in range(self.configs.width):
                 cell: Cell = self.grid[y][x]
-                empty: str = "  "
+                empty: str = f"{self.configs.color.bg}██\033[0m"
                 if cell.is_42:
                     if cell.walls["north"] == 1:
-                        line_1 += f"{pallet.wall}███\033[0m"
+                        line_1 += f"{self.configs.color.wall}███\033[0m"
                     else:
-                        line_1 += f"{pallet.fourty_two}██\033[0m{pallet.wall}█\033[0m"
+                        line_1 += f"{self.configs.color.fourty_two}██\033[0m\
+{self.configs.color.wall}█\033[0m"
                     if cell.walls["west"] == 1:
-                        line_2 += f"{pallet.wall}█\033[0m"
+                        line_2 += f"{self.configs.color.wall}█\033[0m"
                     else:
-                        line_2 += f"{pallet.fourty_two}█\033[0m"
-                    line_2 += f"{pallet.fourty_two}██\033[0m"
+                        line_2 += f"{self.configs.color.fourty_two}█\033[0m"
+                    line_2 += f"{self.configs.color.fourty_two}██\033[0m"
                 else:
                     if (cell.walls["north"] == 1):
-                        line_1 += f"{pallet.wall}██\033[0m"
+                        line_1 += f"{self.configs.color.wall}██\033[0m"
                     else:
                         line_1 += empty
                     if (cell.walls["west"] == 1):
-                        line_2 += f"{pallet.wall}█\033[0m"
+                        line_2 += f"{self.configs.color.wall}█\033[0m"
                     else:
-                        line_2 += " "
-                    line_2 += empty
-                    line_1 += f"{pallet.wall}█\033[0m"
-            line_2 += f"{pallet.wall}█\033[0m"
+                        line_2 += f"{self.configs.color.bg}█\033[0m"
+                    if (cell.exit):
+                        line_2 += f"{self.configs.color.exit}██\033[0m"
+                    elif (cell.entry):
+                        line_2 += f"{self.configs.color.entry}██\033[0m"
+                    else:
+                        line_2 += empty
+                    line_1 += f"{self.configs.color.wall}█\033[0m"
+            line_2 += f"{self.configs.color.wall}█\033[0m"
             ret = ret + line_1 + "\n" + line_2 + "\n"
         bottom_line: str = ""
         for x in range(self.configs.width):
-            bottom_line += f"{pallet.wall}███\033[0m"
-        bottom_line += f"{pallet.wall}█\033[0m"
+            bottom_line += f"{self.configs.color.wall}███\033[0m"
+        bottom_line += f"{self.configs.color.wall}█\033[0m"
         ret += bottom_line
         print(ret)
 
@@ -69,6 +75,10 @@ class MazeGenerator:
             for x in range(width):
                 row.append(Cell((x, y)))
             self.grid.append(row)
+        entry_x, entry_y = self.configs.entry
+        exit_x, exit_y = self.configs.exit
+        self.grid[entry_y][entry_x].entry = True
+        self.grid[exit_y][exit_x].exit = True
 
     def insert_42(self) -> None:
         """
@@ -115,6 +125,13 @@ class MazeGenerator:
         self.grid[y+2][x+2].walls.update({"west": 0})
         self.grid[y+2][x+3].is_42 = True
         self.grid[y+2][x+3].walls.update({"west": 0})
+
+        entry_x, entry_y = self.configs.entry
+        exit_x, exit_y = self.configs.exit
+        if (self.grid[entry_y][entry_x].is_42 is True):
+            raise Error42("Invalid entry")
+        if (self.grid[exit_y][exit_x].is_42 is True):
+            raise Error42("Invalid exit")
 
     def get_maze_hex(self) -> str:
         """

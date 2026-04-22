@@ -1,4 +1,5 @@
 from typing import Optional
+from .Pallets import Pallet, Default
 
 
 class Config():
@@ -20,6 +21,7 @@ class Config():
         self.seed: Optional[int] = None
         if ("SEED" in config_dict):
             self.seed = int(config_dict["SEED"])
+        self.color: Pallet = Default()
 
     @staticmethod
     def _validate_width(width: str) -> int:
