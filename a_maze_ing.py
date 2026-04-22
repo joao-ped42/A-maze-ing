@@ -1,20 +1,6 @@
 import sys
-from maze_generator import Config, MazeGenerator
-
-
-# class Ideias:
-    # generator.display_cells2()
-    # for _ in range(generator.configs.width):
-    #     Cell.put_horizontal()
-    # print()
-    # for _ in range(generator.configs.height):
-    #     for _ in range(generator.configs.width):
-    #         Cell.put_vertical()
-    #     print()
-    #     for _ in range(generator.configs.width):
-    #         Cell.put_horizontal()
-    #     print()
-    # Cell.put_horizontal()
+from MazeGenerator import Config, MazeGenerator, InputError
+from os import system
 
 
 def get_configs(file_name: str) -> Config:
@@ -56,6 +42,53 @@ def display_config(config: Config) -> None:
     print(config.seed)
 
 
+def clearify() -> None:
+    """
+    Clears the terminal
+    """
+    system("clear")
+
+
+def display_options() -> str:
+    print("\n==A-Maze-In==")
+    print("1. Re-generate a new maze")
+    print("2. Show/Hide path from entry to exit")
+    print("3. Rotate colors")
+    print("4. Quit")
+    try:
+        answer: str = input("Choice? (1-4): ")
+        if (answer in "1234"):
+            return (answer)
+        raise InputError("Choose a number 1-4!")
+    except InputError as e:
+        print(e)
+        return (display_options())
+
+
+def display_interface(maze_generator: MazeGenerator) -> None:
+    maze_generator.build_grid()
+    if (maze_generator.configs.width >= 9 and
+            maze_generator.configs.height >= 6):
+        maze_generator.insert_42()
+        # se as cordenadas do entry ou do exit estiverem numa Cell que is_42 ==
+        # True
+        #   raise error
+    maze_generator.get_output_file()
+    maze_generator.display_maze()
+    answer: str = display_options()
+    match answer:
+        case "1":
+            system(f"rm -rf {maze_generator.configs.output_file}")
+            clearify()
+            display_interface(maze_generator)
+        case "2":
+            pass
+        case "3":
+            pass
+        case "4":
+            return
+
+
 def main(file_name: str) -> None:
     """
     Runs the main program.
@@ -63,12 +96,7 @@ def main(file_name: str) -> None:
     try:
         configs: Config = get_configs(file_name)
         generator = MazeGenerator(configs)
-        # display_config(generator.configs)
-        # print("============================================\n")
-        generator.build_grid()
-        generator.insert_42()
-        generator.display_maze()
-        generator.get_output_file()
+        display_interface(generator)
     except Exception as err:
         print(f"{err}")
 
