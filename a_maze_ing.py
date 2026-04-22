@@ -1,6 +1,7 @@
 import sys
-from MazeGenerator import Config, MazeGenerator, InputError
+from MazeGenerator import Config, MazeGenerator, InputError, Pallets
 from os import system
+from typing import Generator
 
 
 def get_configs(file_name: str) -> Config:
@@ -65,16 +66,26 @@ def display_options() -> str:
         return (display_options())
 
 
+def choose_color() -> Generator[Pallets.Pallet, None, None]:
+    colors: list[Pallets.Pallet] = [Pallets.VSCode()]
+    while True:
+        for color in colors:
+            yield (color)
+
+
 def display_interface(maze_generator: MazeGenerator) -> None:
     maze_generator.build_grid()
+    color = choose_color()
     if (maze_generator.configs.width >= 9 and
             maze_generator.configs.height >= 6):
         maze_generator.insert_42()
         # se as cordenadas do entry ou do exit estiverem numa Cell que is_42 ==
         # True
         #   raise error
+    else:
+        print("42 unprintable :(")
     maze_generator.get_output_file()
-    maze_generator.display_maze()
+    maze_generator.display_maze(next(color))
     answer: str = display_options()
     match answer:
         case "1":

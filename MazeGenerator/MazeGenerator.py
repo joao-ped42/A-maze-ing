@@ -1,5 +1,6 @@
 from .Cell import Cell
 from .Config import Config
+import MazeGenerator.Pallets as Pallets
 
 
 class MazeGenerator:
@@ -14,44 +15,44 @@ class MazeGenerator:
         self.configs: Config = configs
         self.grid: list[list[Cell]] = []
 
-    def display_maze(self) -> None:
+    def display_maze(self, pallet: Pallets.Pallet) -> None:
         """
         Prints the maze on the terminal.
         """
         ret: str = ""
         for y in range(self.configs.height):
-            line_1: str = "█"
+            line_1: str = f"{pallet.wall}█\033[0m"
             line_2: str = ""
             for x in range(self.configs.width):
                 cell: Cell = self.grid[y][x]
                 empty: str = "  "
                 if cell.is_42:
                     if cell.walls["north"] == 1:
-                        line_1 += "███"
+                        line_1 += f"{pallet.wall}███\033[0m"
                     else:
-                        line_1 += "\033[31m██\033[0m█"
+                        line_1 += f"{pallet.fourty_two}██\033[0m{pallet.wall}█\033[0m"
                     if cell.walls["west"] == 1:
-                        line_2 += "█"
+                        line_2 += f"{pallet.wall}█\033[0m"
                     else:
-                        line_2 += "\033[31m█\033[0m"
-                    line_2 += "\033[31m██\033[0m"
+                        line_2 += f"{pallet.fourty_two}█\033[0m"
+                    line_2 += f"{pallet.fourty_two}██\033[0m"
                 else:
                     if (cell.walls["north"] == 1):
-                        line_1 += "██"
+                        line_1 += f"{pallet.wall}██\033[0m"
                     else:
                         line_1 += empty
                     if (cell.walls["west"] == 1):
-                        line_2 += "█"
+                        line_2 += f"{pallet.wall}█\033[0m"
                     else:
                         line_2 += " "
                     line_2 += empty
-                    line_1 += "█"
-            line_2 += "█"
+                    line_1 += f"{pallet.wall}█\033[0m"
+            line_2 += f"{pallet.wall}█\033[0m"
             ret = ret + line_1 + "\n" + line_2 + "\n"
         bottom_line: str = ""
         for x in range(self.configs.width):
-            bottom_line += "███"
-        bottom_line += "█"
+            bottom_line += f"{pallet.wall}███\033[0m"
+        bottom_line += f"{pallet.wall}█\033[0m"
         ret += bottom_line
         print(ret)
 
