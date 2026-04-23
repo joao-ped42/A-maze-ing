@@ -114,6 +114,9 @@ class MazeGenerator:
             visitable_neighbors: dict[str, Cell] = {}
             visitable_neighbors = verified_neighbors(current)
             if (not visitable_neighbors):
+                if path:
+                    current = path.pop()
+                    self.make_maze(current, path)
                 return
             direction: str = choice(list(visitable_neighbors.keys()))
             neighbor: Cell = visitable_neighbors[direction]
