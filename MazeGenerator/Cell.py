@@ -15,12 +15,11 @@ class Cell:
             "south": 1,
             "west": 1
         }
-        self.is_42 = False
-        self.visited = False
-        self.entry = False
-        self.exit = False
-
-        self.color = "\033[97m██\033[0m"
+        self.is_42: bool = False
+        self.is_path: bool = False
+        self.visited: bool = False
+        self.entry: bool = False
+        self.exit: bool = False
 
     def destruct_wall(self, direction: str) -> None:
         """

@@ -1,6 +1,6 @@
 from .Cell import Cell
 from .Config import Config
-from .Exceptions import Error42
+from .Exceptions import Error42, MazeError
 from random import choice
 
 
@@ -15,11 +15,14 @@ class MazeGenerator:
         """
         self.configs: Config = configs
         self.grid: list[list[Cell]] = []
+        self.show_path: bool = False
 
     def display_maze(self) -> None:
         """
         Prints the maze on the terminal.
         """
+        if (not self.grid):
+            raise MazeError("There's no maze to display.")
         ret: str = ""
         for y in range(self.configs.height):
             line_1: str = f"{self.configs.color.wall}█\033[0m"
@@ -65,7 +68,8 @@ class MazeGenerator:
 
     def build_grid(self) -> None:
         """
-        Creates the maze by inserting the Cells in the MazeGenerator.grid
+        Creates the maze by inserting the Cells in the MazeGenerator.grid.
+        It's still not the real maze, just a grid.
         """
         width = self.configs.width
         height = self.configs.height
@@ -85,6 +89,10 @@ class MazeGenerator:
             self.insert_42()
 
     def verified_neighbors(self, cell: Cell) -> dict[str, Cell]:
+        """
+        Returns a dictionary with which of the cell's neighbors are valid
+        for naviagtion
+        """
         visitable_neighbors: dict[str, Cell] = {}
         cell_x, cell_y = cell.coordinates
         top: int = 0
@@ -111,7 +119,8 @@ class MazeGenerator:
 
     def make_maze(self, current: Cell, path: list[Cell]) -> None:
         """
-        Breaks walls from start to finish randomly, making the maze paths
+        Breaks walls from start to finish randomly, making the maze paths.
+        Needs to be called after build_grid
         """
         current.visited = True
         while True:
@@ -140,6 +149,10 @@ class MazeGenerator:
             self.make_maze(neighbor, path)
 
     def unperfectify(self) -> None:
+        """
+        Makes more solution paths for the maze.
+        Needs to be called after make_maze
+        """
         for lst in self.grid:
             for cell in lst:
                 if (not cell.is_42):
@@ -158,7 +171,8 @@ class MazeGenerator:
 
     def insert_42(self) -> None:
         """
-        Hardcodes the 42 at the center of the maze
+        Hardcodes the 42 at the center of the maze.
+        Needs to be called after build_grid and before make_maze
         """
         x = int(self.configs.width / 2)
         y = int(self.configs.height / 2)
