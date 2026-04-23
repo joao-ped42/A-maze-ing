@@ -2,6 +2,7 @@ import sys
 from MazeGenerator import Config, MazeGenerator, InputError, Pallets, Cell
 from os import system
 from typing import Generator
+import random
 
 
 def get_configs(file_name: str) -> Config:
@@ -50,7 +51,8 @@ def clearify() -> None:
     system("clear")
 
 
-def display_options() -> str:
+def display_options(generator: MazeGenerator,
+                    color: Generator[Pallets.Pallet, None, None]) -> None:
     print("\n==A-Maze-In==")
     print("1. Re-generate a new maze")
     print("2. Show/Hide path from entry to exit")
@@ -59,11 +61,24 @@ def display_options() -> str:
     try:
         answer: str = input("Choice? (1-4): ")
         if (answer in "1234"):
-            return (answer)
+            match answer:
+                case "1":
+                    system(f"rm -rf {generator.configs.output_file}")
+                    clearify()
+                    display_interface(generator, color)
+                case "2":
+                    pass
+                case "3":
+                    generator.configs.color = next(color)
+                    clearify()
+                    generator.display_maze()
+                    display_options(generator, color)
+                case "4":
+                    exit(0)
         raise InputError("Choose a number 1-4!")
     except InputError as e:
         print(e)
-        return (display_options())
+        display_options(generator, color)
 
 
 def choose_color() -> Generator[Pallets.Pallet, None, None]:
@@ -79,36 +94,26 @@ def display_interface(maze_generator: MazeGenerator, color:
     maze_generator.build_grid()
     start: Cell = maze_generator.grid[0][0]
     path: list[Cell] = []
+    random.seed(maze_generator.configs.seed)
     maze_generator.make_maze(start, path)
+    if (not maze_generator.configs.perfect):
+        maze_generator.unperfectify()
     maze_generator.display_maze()
     maze_generator.get_output_file()
-    answer: str = display_options()
-    match answer:
-        case "1":
-            system(f"rm -rf {maze_generator.configs.output_file}")
-            clearify()
-            display_interface(maze_generator, color)
-        case "2":
-            pass
-        case "3":
-            maze_generator.configs.color = next(color)
-            clearify()
-            display_interface(maze_generator, color)
-        case "4":
-            return
+    display_options(maze_generator, color)
 
 
 def main(file_name: str) -> None:
     """
     Runs the main program.
     """
-    #try:
-    configs: Config = get_configs(file_name)
-    generator = MazeGenerator(configs)
-    colors = choose_color()
-    display_interface(generator, colors)
-    # except Exception as err:
-    #    print(f"{err}")
+    try:
+        configs: Config = get_configs(file_name)
+        generator = MazeGenerator(configs)
+        colors = choose_color()
+        display_interface(generator, colors)
+    except Exception as err:
+        print(f"{err}")
 
 
 if __name__ == "__main__":

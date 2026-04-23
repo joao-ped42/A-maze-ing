@@ -84,35 +84,39 @@ class MazeGenerator:
                 self.configs.height >= 6):
             self.insert_42()
 
+    def verified_neighbors(self, cell: Cell) -> dict[str, Cell]:
+        visitable_neighbors: dict[str, Cell] = {}
+        cell_x, cell_y = cell.coordinates
+        top: int = 0
+        bottom: int = self.configs.height
+        right: int = self.configs.width
+        left: int = 0
+        if (cell_x + 1 < right and
+                not self.grid[cell_y][cell_x + 1].visited):
+            visitable_neighbors.update({"east":
+                                        self.grid[cell_y][cell_x+1]})
+        if (cell_y - 1 >= top and
+                not self.grid[cell_y-1][cell_x].visited):
+            visitable_neighbors.update({"north":
+                                        self.grid[cell_y-1][cell_x]})
+        if (cell_y + 1 < bottom and
+                not self.grid[cell_y+1][cell_x].visited):
+            visitable_neighbors.update({"south":
+                                        self.grid[cell_y+1][cell_x]})
+        if (cell_x - 1 >= left and
+                not self.grid[cell_y][cell_x - 1].visited):
+            visitable_neighbors.update({"west":
+                                        self.grid[cell_y][cell_x-1]})
+        return (visitable_neighbors)
+
     def make_maze(self, current: Cell, path: list[Cell]) -> None:
         """
         Breaks walls from start to finish randomly, making the maze paths
         """
-        def verified_neighbors(cell: Cell) -> dict[str, Cell]:
-            visitable_neighbors: dict[str, Cell] = {}
-            cell_x, cell_y = cell.coordinates
-            top: int = 0
-            bottom: int = self.configs.height
-            right: int = self.configs.width
-            left: int = 0
-            if (cell_x + 1 < right and not self.grid[cell_y][cell_x + 1].visited):
-                visitable_neighbors.update({"east":
-                                            self.grid[cell_y][cell_x+1]})
-            if (cell_y - 1 >= top and not self.grid[cell_y-1][cell_x].visited):
-                visitable_neighbors.update({"north":
-                                            self.grid[cell_y-1][cell_x]})
-            if (cell_y + 1 < bottom and not self.grid[cell_y+1][cell_x].visited):
-                visitable_neighbors.update({"south":
-                                            self.grid[cell_y+1][cell_x]})
-            if (cell_x - 1 >= left and not self.grid[cell_y][cell_x - 1].visited):
-                visitable_neighbors.update({"west":
-                                            self.grid[cell_y][cell_x-1]})
-            return (visitable_neighbors)
-
         current.visited = True
         while True:
             visitable_neighbors: dict[str, Cell] = {}
-            visitable_neighbors = verified_neighbors(current)
+            visitable_neighbors = self.verified_neighbors(current)
             if (not visitable_neighbors):
                 if path:
                     current = path.pop()
@@ -133,9 +137,24 @@ class MazeGenerator:
                 current.destruct_wall("west")
                 neighbor.destruct_wall("east")
             path.append(current)
-            current = neighbor
-            del visitable_neighbors[direction]
-            self.make_maze(current, path)
+            self.make_maze(neighbor, path)
+
+    def unperfectify(self) -> None:
+        for lst in self.grid:
+            for cell in lst:
+                if (not cell.is_42):
+                    cell.visited = False
+        total_cells: list[Cell] = [c for lst in self.grid for c in lst]
+        i: int = 0
+        directions: list[str] = ["north", "east", "south", "west"]
+        while (i < len(total_cells) * (20 / 100)):
+            current_cell: Cell = choice(total_cells)
+            if (not current_cell.is_42):
+                direction = choice(directions)
+                if (current_cell.walls[direction] != 0 and
+                        direction in self.verified_neighbors(current_cell)):
+                    current_cell.destruct_wall(direction)
+                    i += 1
 
     def insert_42(self) -> None:
         """
