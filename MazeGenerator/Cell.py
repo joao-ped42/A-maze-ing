@@ -16,7 +16,7 @@ class Cell:
             "west": 1
         }
         self.is_42 = False
-        self.visited = self.is_42
+        self.visited = False
         self.entry = False
         self.exit = False
 

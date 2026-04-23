@@ -1,5 +1,5 @@
 import sys
-from MazeGenerator import Config, MazeGenerator, InputError, Pallets
+from MazeGenerator import Config, MazeGenerator, InputError, Pallets, Cell
 from os import system
 from typing import Generator
 
@@ -77,13 +77,11 @@ def choose_color() -> Generator[Pallets.Pallet, None, None]:
 def display_interface(maze_generator: MazeGenerator, color:
                       Generator[Pallets.Pallet, None, None]) -> None:
     maze_generator.build_grid()
-    if (maze_generator.configs.width >= 9 and
-            maze_generator.configs.height >= 6):
-        maze_generator.insert_42()
-    else:
-        print("42 unprintable :(")
-    maze_generator.get_output_file()
+    start: Cell = maze_generator.grid[0][0]
+    path: list[Cell] = []
+    maze_generator.make_maze(start, path)
     maze_generator.display_maze()
+    maze_generator.get_output_file()
     answer: str = display_options()
     match answer:
         case "1":
@@ -104,13 +102,13 @@ def main(file_name: str) -> None:
     """
     Runs the main program.
     """
-    try:
-        configs: Config = get_configs(file_name)
-        generator = MazeGenerator(configs)
-        colors = choose_color()
-        display_interface(generator, colors)
-    except Exception as err:
-        print(f"{err}")
+    #try:
+    configs: Config = get_configs(file_name)
+    generator = MazeGenerator(configs)
+    colors = choose_color()
+    display_interface(generator, colors)
+    # except Exception as err:
+    #    print(f"{err}")
 
 
 if __name__ == "__main__":

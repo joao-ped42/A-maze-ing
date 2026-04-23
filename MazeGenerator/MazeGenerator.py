@@ -1,6 +1,7 @@
 from .Cell import Cell
 from .Config import Config
 from .Exceptions import Error42
+from random import choice
 
 
 class MazeGenerator:
@@ -79,6 +80,59 @@ class MazeGenerator:
         exit_x, exit_y = self.configs.exit
         self.grid[entry_y][entry_x].entry = True
         self.grid[exit_y][exit_x].exit = True
+        if (self.configs.width >= 9 and
+                self.configs.height >= 6):
+            self.insert_42()
+
+    def make_maze(self, current: Cell, path: list[Cell]) -> None:
+        """
+        Breaks walls from start to finish randomly, making the maze paths
+        """
+        def verified_neighbors(cell: Cell) -> dict[str, Cell]:
+            visitable_neighbors: dict[str, Cell] = {}
+            cell_x, cell_y = cell.coordinates
+            top: int = 0
+            bottom: int = self.configs.height
+            right: int = self.configs.width
+            left: int = 0
+            if (cell_x + 1 < right and not self.grid[cell_y][cell_x + 1].visited):
+                visitable_neighbors.update({"east":
+                                            self.grid[cell_y][cell_x+1]})
+            if (cell_y - 1 >= top and not self.grid[cell_y-1][cell_x].visited):
+                visitable_neighbors.update({"north":
+                                            self.grid[cell_y-1][cell_x]})
+            if (cell_y + 1 < bottom and not self.grid[cell_y+1][cell_x].visited):
+                visitable_neighbors.update({"south":
+                                            self.grid[cell_y+1][cell_x]})
+            if (cell_x - 1 >= left and not self.grid[cell_y][cell_x - 1].visited):
+                visitable_neighbors.update({"west":
+                                            self.grid[cell_y][cell_x-1]})
+            return (visitable_neighbors)
+
+        current.visited = True
+        while True:
+            visitable_neighbors: dict[str, Cell] = {}
+            visitable_neighbors = verified_neighbors(current)
+            if (not visitable_neighbors):
+                return
+            direction: str = choice(list(visitable_neighbors.keys()))
+            neighbor: Cell = visitable_neighbors[direction]
+            if (direction == "north"):
+                current.destruct_wall("north")
+                neighbor.destruct_wall("south")
+            elif (direction == "south"):
+                current.destruct_wall("south")
+                neighbor.destruct_wall("north")
+            elif (direction == "east"):
+                current.destruct_wall("east")
+                neighbor.destruct_wall("west")
+            else:
+                current.destruct_wall("west")
+                neighbor.destruct_wall("east")
+            path.append(current)
+            current = neighbor
+            del visitable_neighbors[direction]
+            self.make_maze(current, path)
 
     def insert_42(self) -> None:
         """
@@ -86,6 +140,9 @@ class MazeGenerator:
         """
         x = int(self.configs.width / 2)
         y = int(self.configs.height / 2)
+
+        if self.configs.width % 2 == 0:
+            x -= 1
 
         self.grid[y][x-1].is_42 = True
         self.grid[y][x-1].walls.update({"west": 0})
@@ -100,6 +157,9 @@ class MazeGenerator:
         self.grid[y+1][x-1].walls.update({"north": 0})
         self.grid[y+2][x-1].is_42 = True
         self.grid[y+2][x-1].walls.update({"north": 0})
+
+        if self.configs.width % 2 == 0:
+            x += 1
 
         self.grid[y][x+1].is_42 = True
         self.grid[y][x+2].is_42 = True
@@ -132,6 +192,11 @@ class MazeGenerator:
             raise Error42("Invalid entry")
         if (self.grid[exit_y][exit_x].is_42 is True):
             raise Error42("Invalid exit")
+
+        for lst in self.grid:
+            for cell in lst:
+                if cell.is_42:
+                    cell.visited = True
 
     def get_maze_hex(self) -> str:
         """
