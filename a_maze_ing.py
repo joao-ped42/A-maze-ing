@@ -5,35 +5,6 @@ from typing import Generator
 import random
 
 
-def get_configs(file_name: str) -> Config:
-    """
-    The function receives the file name, gets the configuration parameter pairs
-    in it and then creates a dictionary with its values.
-    """
-
-    config_dict: dict[str, str] = {}
-
-    try:
-        with open(file_name, "r") as file:
-            for line in file:
-                if not line.startswith("#"):
-                    key = line.split("=")[0]
-                    value = line.strip().split("=")[1]
-                    config_dict.update({key: value})
-
-    except FileNotFoundError:
-        raise FileNotFoundError("Error: Invalid file!")
-
-    except KeyError:
-        raise KeyError(f"Error: Invalid configurations in {file_name}!")
-
-    try:
-        return Config(config_dict)
-
-    except (KeyError, ValueError, TypeError) as err:
-        raise KeyError(f"{err}")
-
-
 def display_config(config: Config) -> None:
     print(config.width)
     print(config.height)
@@ -83,6 +54,11 @@ def display_options(generator: MazeGenerator,
 
 def choose_color() -> Generator[Pallets.Pallet, None, None]:
     colors: list[Pallets.Pallet] = [Pallets.VSCode(),
+                                    Pallets.CandyStore(),
+                                    Pallets.Quaquaval(),
+                                    Pallets.SSalazzle(),
+                                    Pallets.Brits(),
+                                    Pallets.HomemDeFerro(),
                                     Pallets.Default()]
     while True:
         for color in colors:
@@ -98,6 +74,9 @@ def display_interface(maze_generator: MazeGenerator, color:
     maze_generator.make_maze(start, path)
     if (not maze_generator.configs.perfect):
         maze_generator.unperfectify()
+    entry_coord = maze_generator.configs.entry
+    entry: Cell = maze_generator.grid[entry_coord[1]][entry_coord[0]]
+    # maze_generator.solve_maze(entry)
     maze_generator.display_maze()
     maze_generator.get_output_file()
     display_options(maze_generator, color)
@@ -108,7 +87,7 @@ def main(file_name: str) -> None:
     Runs the main program.
     """
     try:
-        configs: Config = get_configs(file_name)
+        configs: Config = MazeGenerator.get_configs(file_name)
         generator = MazeGenerator(configs)
         colors = choose_color()
         display_interface(generator, colors)

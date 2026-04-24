@@ -2,6 +2,10 @@ from .Cell import Cell
 from .Config import Config
 from .Exceptions import Error42, MazeError
 from random import choice
+import sys
+
+
+sys.setrecursionlimit(200000000)
 
 
 class MazeGenerator:
@@ -17,52 +21,83 @@ class MazeGenerator:
         self.grid: list[list[Cell]] = []
         self.show_path: bool = False
 
+    @staticmethod
+    def get_configs(file_name: str) -> Config:
+        """
+        The function receives the file name, gets the configuration parameter
+        pairs in it and then creates a dictionary with its values.
+        The file name NEEDS to be in the root for it to work.
+        """
+
+        config_dict: dict[str, str] = {}
+
+        try:
+            with open(file_name, "r") as file:
+                for line in file:
+                    if not line.startswith("#"):
+                        key = line.split("=")[0]
+                        value = line.strip().split("=")[1]
+                        config_dict.update({key: value})
+
+        except FileNotFoundError:
+            raise FileNotFoundError("Error: Invalid file!")
+
+        except KeyError:
+            raise KeyError(f"Error: Invalid configurations in {file_name}!")
+
+        try:
+            return Config(config_dict)
+
+        except (KeyError, ValueError, TypeError) as err:
+            raise KeyError(f"{err}")
+
     def display_maze(self) -> None:
         """
-        Prints the maze on the terminal.
+        Prints the maze on the terminal if there's any.
         """
         if (not self.grid):
             raise MazeError("There's no maze to display.")
         ret: str = ""
         for y in range(self.configs.height):
-            line_1: str = f"{self.configs.color.wall}█\033[0m"
+            line_1: str = f"{self.configs.color.wall_h}"
             line_2: str = ""
             for x in range(self.configs.width):
                 cell: Cell = self.grid[y][x]
-                empty: str = f"{self.configs.color.bg}██\033[0m"
                 if cell.is_42:
                     if cell.walls["north"] == 1:
-                        line_1 += f"{self.configs.color.wall}███\033[0m"
+                        line_1 += f"{self.configs.color.wall_v}\
+{self.configs.color.wall_h}"
                     else:
-                        line_1 += f"{self.configs.color.fourty_two}██\033[0m\
-{self.configs.color.wall}█\033[0m"
+                        line_1 += f"{self.configs.color.fourty_two_v}\
+{self.configs.color.wall_h}"
                     if cell.walls["west"] == 1:
-                        line_2 += f"{self.configs.color.wall}█\033[0m"
+                        line_2 += f"{self.configs.color.wall_h}"
                     else:
-                        line_2 += f"{self.configs.color.fourty_two}█\033[0m"
-                    line_2 += f"{self.configs.color.fourty_two}██\033[0m"
+                        line_2 += f"{self.configs.color.fourty_two_h}"
+                    line_2 += f"{self.configs.color.fourty_two_v}"
                 else:
                     if (cell.walls["north"] == 1):
-                        line_1 += f"{self.configs.color.wall}██\033[0m"
+                        line_1 += f"{self.configs.color.wall_v}"
                     else:
-                        line_1 += empty
+                        line_1 += f"{self.configs.color.bg_v}"
                     if (cell.walls["west"] == 1):
-                        line_2 += f"{self.configs.color.wall}█\033[0m"
+                        line_2 += f"{self.configs.color.wall_h}"
                     else:
-                        line_2 += f"{self.configs.color.bg}█\033[0m"
+                        line_2 += f"{self.configs.color.bg_h}"
                     if (cell.exit):
-                        line_2 += f"{self.configs.color.exit}██\033[0m"
+                        line_2 += f"{self.configs.color.exit}"
                     elif (cell.entry):
-                        line_2 += f"{self.configs.color.entry}██\033[0m"
+                        line_2 += f"{self.configs.color.entry}"
                     else:
-                        line_2 += empty
-                    line_1 += f"{self.configs.color.wall}█\033[0m"
-            line_2 += f"{self.configs.color.wall}█\033[0m"
+                        line_2 += f"{self.configs.color.bg_v}"
+                    line_1 += f"{self.configs.color.wall_h}"
+            line_2 += f"{self.configs.color.wall_h}"
             ret = ret + line_1 + "\n" + line_2 + "\n"
         bottom_line: str = ""
         for x in range(self.configs.width):
-            bottom_line += f"{self.configs.color.wall}███\033[0m"
-        bottom_line += f"{self.configs.color.wall}█\033[0m"
+            bottom_line += f"{self.configs.color.wall_v}\
+{self.configs.color.wall_h}"
+        bottom_line += f"{self.configs.color.wall_h}"
         ret += bottom_line
         print(ret)
 
@@ -120,7 +155,8 @@ class MazeGenerator:
     def make_maze(self, current: Cell, path: list[Cell]) -> None:
         """
         Breaks walls from start to finish randomly, making the maze paths.
-        Needs to be called after build_grid
+        Needs to be called after build_grid and after the insert_42 if you want
+        the 42 at the center of the maze
         """
         current.visited = True
         while True:
@@ -162,11 +198,12 @@ class MazeGenerator:
         directions: list[str] = ["north", "east", "south", "west"]
         while (i < len(total_cells) * (20 / 100)):
             current_cell: Cell = choice(total_cells)
-            if (not current_cell.is_42):
+            if (not current_cell.is_42 and not current_cell.visited):
                 direction = choice(directions)
                 if (current_cell.walls[direction] != 0 and
                         direction in self.verified_neighbors(current_cell)):
                     current_cell.destruct_wall(direction)
+                    current_cell.visited = True
                     i += 1
 
     def insert_42(self) -> None:
@@ -233,6 +270,18 @@ class MazeGenerator:
             for cell in lst:
                 if cell.is_42:
                     cell.visited = True
+
+    def solve_maze(self, current: Cell) -> list[Cell]:
+        """
+        Returns a list with the fastest path from the entry to the exit
+        """
+        if (not self.grid):
+            raise MazeError("No maze to solve")
+        for lst in self.grid:
+            for cell in lst:
+                if (not cell.is_42):
+                    cell.visited = False
+        #
 
     def get_maze_hex(self) -> str:
         """
