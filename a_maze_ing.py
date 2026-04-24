@@ -38,7 +38,13 @@ def display_options(generator: MazeGenerator,
                     clearify()
                     display_interface(generator, color)
                 case "2":
-                    pass
+                    clearify()
+                    if generator.show_path:
+                        generator.show_path = False
+                    else:
+                        generator.show_path = True
+                    generator.display_maze()
+                    display_options(generator, color)
                 case "3":
                     generator.configs.color = next(color)
                     clearify()
@@ -74,9 +80,7 @@ def display_interface(maze_generator: MazeGenerator, color:
     maze_generator.make_maze(start, path)
     if (not maze_generator.configs.perfect):
         maze_generator.unperfectify()
-    entry_coord = maze_generator.configs.entry
-    entry: Cell = maze_generator.grid[entry_coord[1]][entry_coord[0]]
-    # maze_generator.solve_maze(entry)
+    maze_generator.solve_maze()
     maze_generator.display_maze()
     maze_generator.get_output_file()
     display_options(maze_generator, color)

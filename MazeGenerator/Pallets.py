@@ -18,7 +18,8 @@ class Pallet:
         self.fourty_two_v = fourty_two + "██\033[0m"
         self.entry = entry + "██\033[0m"
         self.exit = exit + "██\033[0m"
-        self.path = path + "██\033[0m"
+        self.path_h = path + "█\033[0m"
+        self.path_v = path + "██\033[0m"
 
 
 class Default(Pallet):

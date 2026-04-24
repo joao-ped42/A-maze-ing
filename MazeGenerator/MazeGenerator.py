@@ -75,6 +75,32 @@ class MazeGenerator:
                     else:
                         line_2 += f"{self.configs.color.fourty_two_h}"
                     line_2 += f"{self.configs.color.fourty_two_v}"
+                
+                elif cell.is_path and self.show_path:
+                    if cell.walls["north"] == 1:
+                        line_1 += f"{self.configs.color.wall_v}\
+{self.configs.color.wall_h}"
+                    else:
+                        if self.grid[y-1][x].is_path:
+                            line_1 += f"{self.configs.color.path_v}\
+{self.configs.color.wall_h}"
+                        else:
+                            line_1 += f"{self.configs.color.bg_v}\
+{self.configs.color.wall_h}"
+                    if cell.walls["west"] == 1:
+                        line_2 += f"{self.configs.color.wall_h}"
+                    else:
+                        if self.grid[y][x-1].is_path:
+                            line_2 += f"{self.configs.color.path_h}"
+                        else:
+                            line_2 += f"{self.configs.color.bg_h}"
+                    if not cell.exit and not cell.entry:
+                        line_2 += f"{self.configs.color.path_v}"
+                    elif cell.entry:
+                        line_2 += f"{self.configs.color.entry}"
+                    else:
+                        line_2 += f"{self.configs.color.exit}"
+
                 else:
                     if (cell.walls["north"] == 1):
                         line_1 += f"{self.configs.color.wall_v}"
@@ -271,17 +297,58 @@ class MazeGenerator:
                 if cell.is_42:
                     cell.visited = True
 
-    def solve_maze(self, current: Cell) -> list[Cell]:
-        """
-        Returns a list with the fastest path from the entry to the exit
-        """
-        if (not self.grid):
-            raise MazeError("No maze to solve")
-        for lst in self.grid:
-            for cell in lst:
-                if (not cell.is_42):
-                    cell.visited = False
-        #
+    def solve_maze(self) -> list[Cell]:
+
+        def get_neighbor(direction: str, cell: Cell) -> Cell:
+            x, y = cell.coordinates
+            if direction == "north":
+                y -= 1
+            elif direction == "east":
+                x += 1
+            elif direction == "south":
+                y += 1
+            else:
+                x -= 1
+            neighbor = self.grid[y][x]
+            return neighbor
+
+        entry_x, entry_y = self.configs.entry
+        start = self.grid[entry_y][entry_x]
+
+        end_x, end_y = self.configs.exit
+        end = self.grid[end_y][end_x]
+
+        queue: list[Cell] = list()
+        visited: set[Cell] = set()
+        parent: dict[tuple[int, int], tuple[int, int]] = {}
+
+        queue.append(start)
+        visited.add(start)
+
+        while queue:
+            cell = queue.pop(0)
+            cell.visited = True
+            if cell == end:
+                break
+            for direction, wall in cell.walls.items():
+                if wall == 0:
+                    neighbor = get_neighbor(direction, cell)
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        parent[neighbor.coordinates] = cell.coordinates
+                        queue.append(neighbor)
+
+        path = []
+        cur = end
+        start.is_path = True
+        while cur != start:
+            cur.is_path = True
+            path.append(cur)
+            temp_x, temp_y = parent[cur.coordinates]
+            cur = self.grid[temp_y][temp_x]
+        path.append(start)
+        path.reverse()
+        return (path)
 
     def get_maze_hex(self) -> str:
         """
