@@ -319,7 +319,10 @@ class MazeGenerator:
         for lst in self.grid:
             for cell in lst:
                 if cell.is_42:
+                    directions: list[str] = ["north", "south", "east", "west"]
                     cell.visited = True
+                    for direction in directions:
+                        cell.build_wall(direction)
 
     def solve_maze(self) -> list[Cell]:
 
@@ -378,6 +381,25 @@ class MazeGenerator:
         path.reverse()
         return (path)
 
+    def get_path(self) -> str:
+        path: list[Cell] = self.solve_maze()
+        ret: str = ""
+        for i in range(len(path)):
+            if (i + 1 < len(path)):
+                x1, y1 = path[i].coordinates
+                x2, y2 = path[i+1].coordinates
+                if (x1 == x2):
+                    if (y1 - y2 < 0):
+                        ret += "S"
+                    else:
+                        ret += "N"
+                else:
+                    if (x1 - x2 < 0):
+                        ret += "E"
+                    else:
+                        ret += "W"
+        return (ret)
+
     def get_maze_hex(self) -> str:
         """
         Returns a string with the full hexadecimal code of the maze
@@ -400,3 +422,4 @@ class MazeGenerator:
             exit_x, exit_y = self.configs.exit
             file.write(f"\n{entry_x}, {entry_y}\n")
             file.write(f"{exit_x}, {exit_y}")
+            file.write(f"\n{self.get_path()}\n")

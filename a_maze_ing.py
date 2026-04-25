@@ -80,9 +80,11 @@ def display_interface(maze_generator: MazeGenerator, color:
     maze_generator.make_maze(start, path)
     if (not maze_generator.configs.perfect):
         maze_generator.unperfectify()
-    maze_generator.solve_maze()
-    maze_generator.display_maze()
     maze_generator.get_output_file()
+    maze_generator.display_maze()
+    print(maze_generator.grid[1][0].walls)
+    print(maze_generator.grid[2][1].walls)
+    print(maze_generator.grid[1][2].walls)
     display_options(maze_generator, color)
 
 
