@@ -222,15 +222,39 @@ class MazeGenerator:
         total_cells: list[Cell] = [c for lst in self.grid for c in lst]
         i: int = 0
         directions: list[str] = ["north", "east", "south", "west"]
-        while (i < len(total_cells) * (20 / 100)):
+        while (i < len(total_cells) * (10 / 100)):
             current_cell: Cell = choice(total_cells)
             if (not current_cell.is_42 and not current_cell.visited):
                 direction = choice(directions)
-                if (current_cell.walls[direction] != 0 and
-                        direction in self.verified_neighbors(current_cell)):
-                    current_cell.destruct_wall(direction)
-                    current_cell.visited = True
-                    i += 1
+                x, y = current_cell.coordinates
+                if direction == "north" and y - 1 >= 0:
+                    neighbor = self.grid[y-1][x]
+                    if current_cell.walls["north"] != 0 and not neighbor.is_42:
+                        current_cell.destruct_wall("north")
+                        neighbor.destruct_wall("south")
+                        current_cell.visited = True
+                        i += 1
+                elif direction == "south" and y + 1 < self.configs.height:
+                    neighbor = self.grid[y+1][x]
+                    if current_cell.walls["south"] != 0 and not neighbor.is_42:
+                        current_cell.destruct_wall("south")
+                        neighbor.destruct_wall("north")
+                        current_cell.visited = True
+                        i += 1
+                elif direction == "east" and x + 1 < self.configs.width:
+                    neighbor = self.grid[y][x+1]
+                    if current_cell.walls["east"] != 0 and not neighbor.is_42:
+                        current_cell.destruct_wall("east")
+                        neighbor.destruct_wall("west")
+                        current_cell.visited = True
+                        i += 1
+                elif direction == "west" and x - 1 >= 0:
+                    neighbor = self.grid[y][x-1]
+                    if current_cell.walls["west"] != 0 and not neighbor.is_42:
+                        current_cell.destruct_wall("west")
+                        neighbor.destruct_wall("east")
+                        current_cell.visited = True
+                        i += 1
 
     def insert_42(self) -> None:
         """
@@ -312,18 +336,22 @@ class MazeGenerator:
             neighbor = self.grid[y][x]
             return neighbor
 
+        for lst in self.grid:
+            for cell in lst:
+                if cell.is_42 is not True:
+                    cell.visited = False
         entry_x, entry_y = self.configs.entry
         start = self.grid[entry_y][entry_x]
 
         end_x, end_y = self.configs.exit
-        end = self.grid[end_y][end_x]
+        end: Cell = self.grid[end_y][end_x]
 
-        queue: list[Cell] = list()
-        visited: set[Cell] = set()
+        queue: list[Cell] = []
+        visited: list[Cell] = []
         parent: dict[tuple[int, int], tuple[int, int]] = {}
 
         queue.append(start)
-        visited.add(start)
+        visited.append(start)
 
         while queue:
             cell = queue.pop(0)
@@ -334,12 +362,12 @@ class MazeGenerator:
                 if wall == 0:
                     neighbor = get_neighbor(direction, cell)
                     if neighbor not in visited:
-                        visited.add(neighbor)
+                        visited.append(neighbor)
                         parent[neighbor.coordinates] = cell.coordinates
                         queue.append(neighbor)
 
-        path = []
-        cur = end
+        path: list[Cell] = []
+        cur: Cell = end
         start.is_path = True
         while cur != start:
             cur.is_path = True
