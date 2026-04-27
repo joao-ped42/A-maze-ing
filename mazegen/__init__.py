@@ -1,13 +1,14 @@
 from .MazeGenerator import MazeGenerator
-from .Exceptions import InputError, Error42
+from .Exceptions import MazeError, Error42, InputError
 from .Cell import Cell
 from .Config import Config
-import MazeGenerator.Pallets as Pallets
+import mazegen.Pallets as Pallets
 
 
 __all__ = ["MazeGenerator",
-           "InputError",
+           "MazeError",
            "Error42",
+           "InputError",
            "Cell",
            "Config",
            "Pallets"]

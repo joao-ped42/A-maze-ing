@@ -4,9 +4,13 @@ class Cell:
     Each Cell has 4 wall directions, 1 means closed, 0 means open.
     When created, all walls are closed.
     """
+
     def __init__(self, coords: tuple[int, int]) -> None:
         """
-        Initializes the class
+        Initializes the cell with coordinates and closed walls.
+
+        Args:
+            coords (tuple[int, int]): Cell coordinates.
         """
         self.coordinates: tuple[int, int] = coords
         self.walls: dict[str, int] = {
@@ -15,7 +19,7 @@ class Cell:
             "south": 1,
             "west": 1
         }
-        self.is_42: bool = False
+        self.is_pattern: bool = False
         self.is_path: bool = False
         self.visited: bool = False
         self.entry: bool = False
@@ -23,21 +27,28 @@ class Cell:
 
     def destruct_wall(self, direction: str) -> None:
         """
-        Kills a wall out of the existence by changing one of the Cell.walls
-        value to 0
+        Breaks a wall of the cell, making it open.
+
+        Args:
+            direction (str): Direction of the wall to break.
         """
         self.walls.update({direction: 0})
 
     def build_wall(self, direction: str) -> None:
         """
-        Brings a wall to life by changing one of the Cell.walls
-        value to 0
+        Builds a wall of the cell, making it closed.
+
+        Args:
+            direction (str): Direction of the wall to build.
         """
         self.walls.update({direction: 1})
 
     def get_hex(self) -> int:
         """
-        Gets the Cell's hexadecimal code
+        Returns the hexadecimal code of the cell based on its walls.
+
+        Returns:
+            int: Hexadecimal code of the cell.
         """
         north = self.walls["north"]
         east = self.walls["east"]

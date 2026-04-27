@@ -10,50 +10,47 @@ sys.setrecursionlimit(200000000)
 
 class MazeGenerator:
     """
-    Handles the management of the maze, from it's generation to it's output.
-    It recieves a Config object with the maze specs.
+    MazeGenerator is responsible for creating, displaying, and solving mazes.
     """
     def __init__(self, configs: Config) -> None:
         """
-        Initializes the class
+        Initialize MazeGenerator with configuration data.
+
+        Args:
+            configs (Config): The configuration object with maze parameters.
         """
         self.configs: Config = configs
         self.grid: list[list[Cell]] = []
         self.show_path: bool = False
 
-    @staticmethod
-    def get_configs(file_name: str) -> Config:
+    def build_grid(self) -> None:
         """
-        The function receives the file name, gets the configuration parameter
-        pairs in it and then creates a dictionary with its values.
-        The file name NEEDS to be in the root for it to work.
+        Create the initial grid of Cell objects for the maze.
+
+        This method fills the grid with Cell instances, sets entry and exit
+        points, and optionally inserts the '42' pattern if the maze is large
+        enough.
         """
-
-        config_dict: dict[str, str] = {}
-
-        try:
-            with open(file_name, "r") as file:
-                for line in file:
-                    if not line.startswith("#"):
-                        key = line.split("=")[0]
-                        value = line.strip().split("=")[1]
-                        config_dict.update({key: value})
-
-        except FileNotFoundError:
-            raise FileNotFoundError("Error: Invalid file!")
-
-        except KeyError:
-            raise KeyError(f"Error: Invalid configurations in {file_name}!")
-
-        try:
-            return Config(config_dict)
-
-        except (KeyError, ValueError, TypeError) as err:
-            raise KeyError(f"{err}")
+        width = self.configs.width
+        height = self.configs.height
+        if (len(self.grid) > 0):
+            self.grid.clear()
+        for y in range(height):
+            row: list[Cell] = []
+            for x in range(width):
+                row.append(Cell((x, y)))
+            self.grid.append(row)
+        entry_x, entry_y = self.configs.entry
+        exit_x, exit_y = self.configs.exit
+        self.grid[entry_y][entry_x].entry = True
+        self.grid[exit_y][exit_x].exit = True
 
     def display_maze(self) -> None:
         """
-        Prints the maze on the terminal if there's any.
+        Print the maze to the terminal.
+
+        Raises:
+            MazeError: If there is no maze to display.
         """
         if (not self.grid):
             raise MazeError("There's no maze to display.")
@@ -63,7 +60,7 @@ class MazeGenerator:
             line_2: str = ""
             for x in range(self.configs.width):
                 cell: Cell = self.grid[y][x]
-                if cell.is_42:
+                if cell.is_pattern:
                     if cell.walls["north"] == 1:
                         line_1 += f"{self.configs.color.wall_v}\
 {self.configs.color.wall_h}"
@@ -75,7 +72,6 @@ class MazeGenerator:
                     else:
                         line_2 += f"{self.configs.color.fourty_two_h}"
                     line_2 += f"{self.configs.color.fourty_two_v}"
-                
                 elif cell.is_path and self.show_path:
                     if cell.walls["north"] == 1:
                         line_1 += f"{self.configs.color.wall_v}\
@@ -127,32 +123,15 @@ class MazeGenerator:
         ret += bottom_line
         print(ret)
 
-    def build_grid(self) -> None:
-        """
-        Creates the maze by inserting the Cells in the MazeGenerator.grid.
-        It's still not the real maze, just a grid.
-        """
-        width = self.configs.width
-        height = self.configs.height
-        if (len(self.grid) > 0):
-            self.grid.clear()
-        for y in range(height):
-            row: list[Cell] = []
-            for x in range(width):
-                row.append(Cell((x, y)))
-            self.grid.append(row)
-        entry_x, entry_y = self.configs.entry
-        exit_x, exit_y = self.configs.exit
-        self.grid[entry_y][entry_x].entry = True
-        self.grid[exit_y][exit_x].exit = True
-        if (self.configs.width >= 9 and
-                self.configs.height >= 6):
-            self.insert_42()
-
     def verified_neighbors(self, cell: Cell) -> dict[str, Cell]:
         """
-        Returns a dictionary with which of the cell's neighbors are valid
-        for naviagtion
+        Get valid, unvisited neighboring cells for navigation.
+
+        Args:
+            cell (Cell): The cell whose neighbors are to be checked.
+
+        Returns:
+            dict[str, Cell]: Dictionary of direction to neighbor Cell.
         """
         visitable_neighbors: dict[str, Cell] = {}
         cell_x, cell_y = cell.coordinates
@@ -180,9 +159,11 @@ class MazeGenerator:
 
     def make_maze(self, current: Cell, path: list[Cell]) -> None:
         """
-        Breaks walls from start to finish randomly, making the maze paths.
-        Needs to be called after build_grid and after the insert_42 if you want
-        the 42 at the center of the maze
+        Recursively carve out a maze by breaking walls between cells.
+
+        Args:
+            current (Cell): The current cell being visited.
+            path (list[Cell]): The path taken so far (used for backtracking).
         """
         current.visited = True
         while True:
@@ -210,123 +191,227 @@ class MazeGenerator:
             path.append(current)
             self.make_maze(neighbor, path)
 
+    def _forms_open_3x3(self, x: int, y: int) -> bool:
+        """
+        Verifies if breaking a cell wall would create a 3x3 open cells.
+        """
+        for dy in [-2, -1, 0]:
+            for dx in [-2, -1, 0]:
+                cells: list[Cell] = []
+                for iy in range(3):
+                    for ix in range(3):
+                        ny, nx = y + dy + iy, x + dx + ix
+                        if (0 <= ny < self.configs.height and
+                                0 <= nx < self.configs.width):
+                            cells.append(self.grid[ny][nx])
+                        else:
+                            break
+                if len(cells) == 9:
+                    open_count: int = 0
+                    for cell in cells:
+                        if sum(cell.walls.values()) < 2:
+                            open_count += 1
+                    if open_count == 9:
+                        return True
+        return False
+
     def unperfectify(self) -> None:
         """
-        Makes more solution paths for the maze.
-        Needs to be called after make_maze
+        Randomly break more walls to create multiple solution paths, but
+        prevents forming 3x3 open blocks.
         """
         for lst in self.grid:
             for cell in lst:
-                if (not cell.is_42):
+                if (not cell.is_pattern):
                     cell.visited = False
         total_cells: list[Cell] = [c for lst in self.grid for c in lst]
         i: int = 0
         directions: list[str] = ["north", "east", "south", "west"]
-        while (i < len(total_cells) * (10 / 100)):
+        while (i < len(total_cells) * (40 / 100)):
             current_cell: Cell = choice(total_cells)
-            if (not current_cell.is_42 and not current_cell.visited):
-                direction = choice(directions)
-                x, y = current_cell.coordinates
-                if direction == "north" and y - 1 >= 0:
-                    neighbor = self.grid[y-1][x]
-                    if current_cell.walls["north"] != 0 and not neighbor.is_42:
-                        current_cell.destruct_wall("north")
-                        neighbor.destruct_wall("south")
-                        current_cell.visited = True
-                        i += 1
-                elif direction == "south" and y + 1 < self.configs.height:
-                    neighbor = self.grid[y+1][x]
-                    if current_cell.walls["south"] != 0 and not neighbor.is_42:
-                        current_cell.destruct_wall("south")
-                        neighbor.destruct_wall("north")
-                        current_cell.visited = True
-                        i += 1
-                elif direction == "east" and x + 1 < self.configs.width:
-                    neighbor = self.grid[y][x+1]
-                    if current_cell.walls["east"] != 0 and not neighbor.is_42:
-                        current_cell.destruct_wall("east")
-                        neighbor.destruct_wall("west")
-                        current_cell.visited = True
-                        i += 1
-                elif direction == "west" and x - 1 >= 0:
-                    neighbor = self.grid[y][x-1]
-                    if current_cell.walls["west"] != 0 and not neighbor.is_42:
-                        current_cell.destruct_wall("west")
-                        neighbor.destruct_wall("east")
-                        current_cell.visited = True
-                        i += 1
+            if (len(self.verified_neighbors(current_cell)) > 1):
+                if (not current_cell.is_pattern and not current_cell.visited):
+                    direction = choice(directions)
+                    x, y = current_cell.coordinates
+                    if direction == "north" and y - 1 >= 0:
+                        neighbor = self.grid[y-1][x]
+                        if (current_cell.walls["north"] != 0 and
+                                not neighbor.is_pattern and
+                                not self._forms_open_3x3(x, y-1)):
+                            current_cell.destruct_wall("north")
+                            neighbor.destruct_wall("south")
+                            current_cell.visited = True
+                            i += 1
+                    elif direction == "south" and y + 1 < self.configs.height:
+                        neighbor = self.grid[y+1][x]
+                        if (current_cell.walls["south"] != 0 and
+                                not neighbor.is_pattern and
+                                not self._forms_open_3x3(x, y+1)):
+                            current_cell.destruct_wall("south")
+                            neighbor.destruct_wall("north")
+                            current_cell.visited = True
+                            i += 1
+                    elif direction == "east" and x + 1 < self.configs.width:
+                        neighbor = self.grid[y][x+1]
+                        if (current_cell.walls["east"] != 0 and
+                                not neighbor.is_pattern and
+                                not self._forms_open_3x3(x+1, y)):
+                            current_cell.destruct_wall("east")
+                            neighbor.destruct_wall("west")
+                            current_cell.visited = True
+                            i += 1
+                    elif direction == "west" and x - 1 >= 0:
+                        neighbor = self.grid[y][x-1]
+                        if (current_cell.walls["west"] != 0 and
+                                not neighbor.is_pattern and
+                                not self._forms_open_3x3(x-1, y)):
+                            current_cell.destruct_wall("west")
+                            neighbor.destruct_wall("east")
+                            current_cell.visited = True
+                            i += 1
+            i += 1
 
     def insert_42(self) -> None:
         """
-        Hardcodes the 42 at the center of the maze.
-        Needs to be called after build_grid and before make_maze
+        Insert a hardcoded '42' pattern at the center of the maze.
+
+        Raises:
+            Error42: If the entry or exit is inside the '42' pattern.
+            MazeError: If the maze is too small for the pattern.
         """
+        if (self.configs.width < 9 or self.configs.height < 6):
+            raise MazeError("\nMaze too small to insert 42\n")
         x = int(self.configs.width / 2)
         y = int(self.configs.height / 2)
 
         if self.configs.width % 2 == 0:
             x -= 1
 
-        self.grid[y][x-1].is_42 = True
-        self.grid[y][x-1].walls.update({"west": 0})
-        self.grid[y][x-2].is_42 = True
-        self.grid[y][x-2].walls.update({"west": 0})
-        self.grid[y][x-3].is_42 = True
-        self.grid[y][x-3].walls.update({"north": 0})
-        self.grid[y-1][x-3].is_42 = True
-        self.grid[y-1][x-3].walls.update({"north": 0})
-        self.grid[y-2][x-3].is_42 = True
-        self.grid[y+1][x-1].is_42 = True
-        self.grid[y+1][x-1].walls.update({"north": 0})
-        self.grid[y+2][x-1].is_42 = True
-        self.grid[y+2][x-1].walls.update({"north": 0})
+        self.grid[y][x-1].is_pattern = True
+        self.grid[y][x-2].is_pattern = True
+        self.grid[y][x-3].is_pattern = True
+        self.grid[y-1][x-3].is_pattern = True
+        self.grid[y-2][x-3].is_pattern = True
+        self.grid[y+1][x-1].is_pattern = True
+        self.grid[y+2][x-1].is_pattern = True
 
         if self.configs.width % 2 == 0:
             x += 1
 
-        self.grid[y][x+1].is_42 = True
-        self.grid[y][x+2].is_42 = True
-        self.grid[y][x+2].walls.update({"west": 0})
-        self.grid[y][x+3].is_42 = True
-        self.grid[y][x+3].walls.update({"north": 0})
-        self.grid[y][x+3].walls.update({"west": 0})
+        self.grid[y][x+1].is_pattern = True
+        self.grid[y][x+2].is_pattern = True
+        self.grid[y][x+3].is_pattern = True
 
-        self.grid[y-1][x+3].is_42 = True
-        self.grid[y-1][x+3].walls.update({"north": 0})
-        self.grid[y-2][x+3].is_42 = True
-        self.grid[y-2][x+3].walls.update({"west": 0})
+        self.grid[y-1][x+3].is_pattern = True
+        self.grid[y-2][x+3].is_pattern = True
 
-        self.grid[y-2][x+2].is_42 = True
-        self.grid[y-2][x+2].walls.update({"west": 0})
-        self.grid[y-2][x+1].is_42 = True
-        self.grid[y+1][x+1].is_42 = True
-        self.grid[y+1][x+1].walls.update({"north": 0})
-        self.grid[y+2][x+1].is_42 = True
-        self.grid[y+2][x+1].walls.update({"north": 0})
+        self.grid[y-2][x+2].is_pattern = True
+        self.grid[y-2][x+1].is_pattern = True
+        self.grid[y+1][x+1].is_pattern = True
+        self.grid[y+2][x+1].is_pattern = True
 
-        self.grid[y+2][x+2].is_42 = True
-        self.grid[y+2][x+2].walls.update({"west": 0})
-        self.grid[y+2][x+3].is_42 = True
-        self.grid[y+2][x+3].walls.update({"west": 0})
+        self.grid[y+2][x+2].is_pattern = True
+        self.grid[y+2][x+3].is_pattern = True
 
         entry_x, entry_y = self.configs.entry
         exit_x, exit_y = self.configs.exit
-        if (self.grid[entry_y][entry_x].is_42 is True):
+        if (self.grid[entry_y][entry_x].is_pattern is True):
             raise Error42("Invalid entry")
-        if (self.grid[exit_y][exit_x].is_42 is True):
+        if (self.grid[exit_y][exit_x].is_pattern is True):
             raise Error42("Invalid exit")
 
         for lst in self.grid:
             for cell in lst:
-                if cell.is_42:
+                if cell.is_pattern:
+                    directions: list[str] = ["north", "south", "east", "west"]
+                    cell.visited = True
+                    for direction in directions:
+                        cell.build_wall(direction)
+
+    def insert_67(self) -> None:
+        """
+        Insert a hardcoded '67' pattern at the center of the maze.
+
+        Raises:
+            Error42: If the entry or exit is inside the '67' pattern.
+            MazeError: If the maze is too small for the pattern.
+        """
+        if (self.configs.width < 9 or self.configs.height < 6):
+            raise MazeError("\nMaze too small to insert 67\n")
+        if (not self.grid):
+            print("No grid has been created yet")
+            return
+        x = int(self.configs.width / 2)
+        y = int(self.configs.height / 2)
+
+        if self.configs.width % 2 == 0:
+            x -= 1
+
+        self.grid[y][x-1].is_pattern = True
+        self.grid[y][x-3].is_pattern = True
+        self.grid[y][x-3].is_pattern = True
+        self.grid[y+1][x-3].is_pattern = True
+        self.grid[y+2][x-3].is_pattern = True
+        self.grid[y+2][x-2].is_pattern = True
+        self.grid[y-1][x-3].is_pattern = True
+        self.grid[y-2][x-3].is_pattern = True
+        self.grid[y+2][x-1].is_pattern = True
+        self.grid[y+2][x].is_pattern = True
+        self.grid[y+1][x].is_pattern = True
+        self.grid[y][x].is_pattern = True
+
+        if self.configs.width % 2 == 0:
+            x += 1
+
+        self.grid[y][x+3].is_pattern = True
+
+        self.grid[y-1][x+3].is_pattern = True
+        self.grid[y-2][x+3].is_pattern = True
+
+        self.grid[y-2][x+2].is_pattern = True
+        self.grid[y-2][x+1].is_pattern = True
+
+        self.grid[y+2][x+3].is_pattern = True
+        self.grid[y+1][x+3].is_pattern = True
+
+        entry_x, entry_y = self.configs.entry
+        exit_x, exit_y = self.configs.exit
+        if (self.grid[entry_y][entry_x].is_pattern is True):
+            raise Error42("Invalid entry")
+        if (self.grid[exit_y][exit_x].is_pattern is True):
+            raise Error42("Invalid exit")
+
+        for lst in self.grid:
+            for cell in lst:
+                if cell.is_pattern:
+                    cell.visited = True
+
+        for lst in self.grid:
+            for cell in lst:
+                if cell.is_pattern:
                     directions: list[str] = ["north", "south", "east", "west"]
                     cell.visited = True
                     for direction in directions:
                         cell.build_wall(direction)
 
     def solve_maze(self) -> list[Cell]:
+        """
+        Find the shortest path from the maze entry to the exit using BFS.
 
+        Returns:
+            list[Cell]: List of cells representing the solution path.
+        """
         def get_neighbor(direction: str, cell: Cell) -> Cell:
+            """
+            Get the neighboring cell in the specified direction.
+
+            Args:
+                direction (str): The direction to look for the neighbor.
+                cell (Cell): The reference cell.
+
+            Returns:
+                Cell: The neighboring cell in the given direction.
+            """
             x, y = cell.coordinates
             if direction == "north":
                 y -= 1
@@ -341,7 +426,7 @@ class MazeGenerator:
 
         for lst in self.grid:
             for cell in lst:
-                if cell.is_42 is not True:
+                if cell.is_pattern is not True:
                     cell.visited = False
         entry_x, entry_y = self.configs.entry
         start = self.grid[entry_y][entry_x]
@@ -382,6 +467,12 @@ class MazeGenerator:
         return (path)
 
     def get_path(self) -> str:
+        """
+        Get the directions from entry to exit as a string (e.g., 'SENW').
+
+        Returns:
+            str: Directions to the exit using 'N', 'S', 'E', 'W'.
+        """
         path: list[Cell] = self.solve_maze()
         ret: str = ""
         for i in range(len(path)):
@@ -402,7 +493,10 @@ class MazeGenerator:
 
     def get_maze_hex(self) -> str:
         """
-        Returns a string with the full hexadecimal code of the maze
+        Get the hexadecimal representation of the maze.
+
+        Returns:
+            str: The maze as a string of hexadecimal codes.
         """
         ret: str = ""
         for lst in self.grid:
@@ -414,7 +508,7 @@ class MazeGenerator:
 
     def get_output_file(self) -> None:
         """
-        Creates the output file with all the needed information
+        Write the maze, entry/exit, and solution path to the output file.
         """
         with open(self.configs.output_file, "w") as file:
             file.write(self.get_maze_hex())

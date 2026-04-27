@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mazegen-1.0.0-py3-gabrieol-joaop-ped"
+version = "1.0.0"
+descriptiom = "Um gerenciador de labirintos"
+authors = [
+    { name = "Gabriel Oliveira", email = "gabrieol@student.42.rio" },
+    { name = "João Pedro", email = "joao-ped@student.42.rio" }
+]
+requires-python = ">=3.8"
+
+dependencies = []

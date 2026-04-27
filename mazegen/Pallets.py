@@ -1,6 +1,6 @@
 class Pallet:
     """
-    Colors
+    Color pallet for the maze.
     """
     def __init__(self,
                  wall: str,
@@ -9,7 +9,18 @@ class Pallet:
                  entry: str,
                  exit: str,
                  path: str) -> None:
+        """
+        Initializes the pallet with the colored character for each wall and
+        empty space in the maze.
 
+        Args:
+            wall (str): Wall color.
+            bg (str): Background color.
+            fourty_two (str): Color for the '42' pattern.
+            entry (str): Entry color.
+            exit (str): Exit color.
+            path (str): Path color.
+        """
         self.wall_h = wall + "█\033[0m"
         self.wall_v = wall + "██\033[0m"
         self.bg_h = bg + "█\033[0m"
@@ -24,6 +35,10 @@ class Pallet:
 
 class Default(Pallet):
     def __init__(self) -> None:
+        """
+        Initializes the class with default colors: black, white, red, green
+        and pink.
+        """
         super().__init__("\033[38;2;255;255;255m",
                          "\033[38;2;0;0;0m",
                          "\033[38;2;6;170;189m",
@@ -34,6 +49,9 @@ class Default(Pallet):
 
 class VSCode(Pallet):
     def __init__(self) -> None:
+        """
+        Initializes the class with the colors of VSCode.
+        """
         super().__init__("\033[38;2;16;160;227m",
                          "\033[38;2;25;55;69m",
                          "\033[38;2;247;232;96m",
@@ -44,6 +62,9 @@ class VSCode(Pallet):
 
 class CandyStore(Pallet):
     def __init__(self) -> None:
+        """
+        Initializes the class with a pallet based on Heathers.
+        """
         super().__init__("\033[38;2;173;19;19m",
                          "\033[38;2;247;229;156m",
                          "\033[38;2;89;158;82m",
@@ -54,6 +75,9 @@ class CandyStore(Pallet):
 
 class Quaquaval(Pallet):
     def __init__(self) -> None:
+        """
+        Initializes the class with a pallet based on Quaquaval.
+        """
         super().__init__("\033[38;2;54;79;160m",
                          "\033[38;2;138;209;223m",
                          "\033[38;2;237;248;251m",
@@ -64,6 +88,9 @@ class Quaquaval(Pallet):
 
 class SSalazzle(Pallet):
     def __init__(self) -> None:
+        """
+        Initializes the class with a pallet based on Shiny Salazzle.
+        """
         super().__init__("\033[38;2;255;255;255m",
                          "\033[38;2;120;117;145m",
                          "\033[38;2;242;88;133m",
@@ -74,6 +101,9 @@ class SSalazzle(Pallet):
 
 class Brits(Pallet):
     def __init__(self) -> None:
+        """
+        Initializes the class with a pallet based on jbrits-m.
+        """
         super().__init__("\033[38;2;181;118;246m",
                          "\033[38;2;34;3;65m",
                          "\033[38;2;65;247;236m",
@@ -84,6 +114,9 @@ class Brits(Pallet):
 
 class HomemDeFerro(Pallet):
     def __init__(self) -> None:
+        """
+        Initializes the class with a pallet based on Iron Man.
+        """
         super().__init__("\033[38;2;212;8;8m",
                          "\033[38;2;206;161;63m",
                          "\033[38;2;34;234;245m",
