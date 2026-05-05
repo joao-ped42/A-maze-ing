@@ -316,9 +316,9 @@ class MazeGenerator:
         entry_x, entry_y = self.configs.entry
         exit_x, exit_y = self.configs.exit
         if (self.grid[entry_y][entry_x].is_pattern is True):
-            raise Error42("Invalid entry")
+            raise Error42("Invalid entry: Inside 42")
         if (self.grid[exit_y][exit_x].is_pattern is True):
-            raise Error42("Invalid exit")
+            raise Error42("Invalid exit: Inside 42")
 
         for lst in self.grid:
             for cell in lst:
@@ -377,9 +377,9 @@ class MazeGenerator:
         entry_x, entry_y = self.configs.entry
         exit_x, exit_y = self.configs.exit
         if (self.grid[entry_y][entry_x].is_pattern is True):
-            raise Error42("Invalid entry")
+            raise Error42("Invalid entry: Inside 67")
         if (self.grid[exit_y][exit_x].is_pattern is True):
-            raise Error42("Invalid exit")
+            raise Error42("Invalid exit: Inside 67")
 
         for lst in self.grid:
             for cell in lst:

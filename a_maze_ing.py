@@ -19,7 +19,10 @@ def get_coord(coord: str) -> tuple[int, int]:
         tuple[int, int]: Tuple with integer coordinates.
     """
     coord_list: list[str] = coord.split(",")
-    return (int(coord_list[0]), int(coord_list[1]))
+    try:
+        return (int(coord_list[0]), int(coord_list[1]))
+    except (IndexError):
+        raise IndexError("Invalid coordinates syntax")
 
 
 def get_configs(file_name: str) -> Config:
@@ -160,10 +163,7 @@ def display_interface(maze_generator: MazeGenerator, color:
     start: Cell = maze_generator.grid[0][0]
     path: list[Cell] = []
     random.seed(maze_generator.configs.seed)
-    try:
-        maze_generator.insert_42()
-    except Exception as e:
-        print(e)
+    maze_generator.insert_42()
     maze_generator.make_maze(start, path)
     if (not maze_generator.configs.perfect):
         maze_generator.unperfectify()
