@@ -2,6 +2,8 @@ from .Cell import Cell
 from .Config import Config
 from .Exceptions import Error42, MazeError
 from random import choice
+from typing import Optional
+from .Pallets import Pallet, Default
 import sys
 
 
@@ -12,14 +14,36 @@ class MazeGenerator:
     """
     MazeGenerator is responsible for creating, displaying, and solving mazes.
     """
-    def __init__(self, configs: Config) -> None:
+    def __init__(self,
+                 width: int,
+                 height: int,
+                 entry_coord: tuple[int, int],
+                 exit_coord: tuple[int, int],
+                 output_file: str,
+                 perfect: bool,
+                 seed: Optional[int] = None,
+                 color: Pallet = Default()) -> None:
         """
-        Initialize MazeGenerator with configuration data.
+        Initializes the generator with the configuration for the maze.
 
         Args:
-            configs (Config): The configuration object with maze parameters.
+            width (int): Maze width.
+            height (int): Maze height.
+            entry_coord (tuple[int, int]): Entry coordinates.
+            exit_coord (tuple[int, int]): Exit coordinates.
+            output_file (str): Output file name.
+            perfect (bool): Whether the maze is perfect.
+            seed (Optional[int]): Random seed.
+            color (Pallet): Color pallet.
         """
-        self.configs: Config = configs
+        self.configs: Config = Config(width,
+                                      height,
+                                      entry_coord,
+                                      exit_coord,
+                                      output_file,
+                                      perfect,
+                                      seed,
+                                      color)
         self.grid: list[list[Cell]] = []
         self.show_path: bool = False
 

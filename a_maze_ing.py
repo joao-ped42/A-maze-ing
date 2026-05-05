@@ -25,7 +25,7 @@ def get_coord(coord: str) -> tuple[int, int]:
         raise IndexError("Invalid coordinates syntax")
 
 
-def get_configs(file_name: str) -> Config:
+def get_mazegen(file_name: str) -> MazeGenerator:
     """
     Reads the configuration file and returns a Config object.
 
@@ -44,8 +44,8 @@ def get_configs(file_name: str) -> Config:
         with open(file_name, "r") as file:
             for line in file:
                 if not line.startswith("#"):
-                    key = line.split("=")[0]
-                    value = line.strip().split("=")[1]
+                    key: str = line.split("=")[0]
+                    value: str = line.strip().split("=")[1]
                     config_dict.update({key: value})
 
     except FileNotFoundError:
@@ -61,13 +61,13 @@ def get_configs(file_name: str) -> Config:
             seed: int | None = int(config_dict["SEED"])
         else:
             seed = None
-        return Config(int(config_dict["WIDTH"]),
-                      int(config_dict["HEIGHT"]),
-                      get_coord(config_dict["ENTRY"]),
-                      get_coord(config_dict["EXIT"]),
-                      config_dict["OUTPUT_FILE"],
-                      perfect,
-                      seed)
+        return MazeGenerator(int(config_dict["WIDTH"]),
+                             int(config_dict["HEIGHT"]),
+                             get_coord(config_dict["ENTRY"]),
+                             get_coord(config_dict["EXIT"]),
+                             config_dict["OUTPUT_FILE"],
+                             perfect,
+                             seed)
 
     except (KeyError, ValueError) as err:
         raise KeyError(f"{err}")
@@ -180,9 +180,8 @@ def main(file_name: str) -> None:
         file_name (str): Name of the configuration file.
     """
     try:
-        configs: Config = get_configs(file_name)
-        generator = MazeGenerator(configs)
-        colors = choose_color()
+        generator: MazeGenerator = get_mazegen(file_name)
+        colors: Generator[Pallets.Pallet, None, None] = choose_color()
         display_interface(generator, colors)
     except Exception as e:
         print(f"ERROR: {e}")
